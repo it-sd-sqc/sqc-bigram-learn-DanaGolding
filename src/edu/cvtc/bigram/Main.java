@@ -180,15 +180,16 @@ public class Main {
     aWord = aWord.trim();
     if (aWord.isEmpty()) return result;
 
-    try (PreparedStatement insertStatement = db.prepareStatement(
-            "INSERT INTO words (string) SELECT ? WHERE NOT EXISTS (SELECT string FROM words WHERE string = ?)")) {
+    String insertQuery = "INSERT INTO words (string) SELECT ? WHERE NOT EXISTS (SELECT string FROM words WHERE string = ?)";
+    String selectQuery = "SELECT id FROM words WHERE string = ?";
+
+    try (PreparedStatement insertStatement = db.prepareStatement(insertQuery);
+         PreparedStatement selectStatement = db.prepareStatement(selectQuery)) {
+
       insertStatement.setString(1, aWord);
       insertStatement.setString(2, aWord);
       insertStatement.executeUpdate();
-    }
 
-    try (PreparedStatement selectStatement = db.prepareStatement(
-            "SELECT id FROM words WHERE string = ?")) {
       selectStatement.setString(1, aWord);
       ResultSet rows = selectStatement.executeQuery();
       if (rows.next()) {
@@ -197,6 +198,7 @@ public class Main {
     }
 
     return result;
+
 
 //    Statement command = db.createStatement();
 //    String query = MessageFormat.format("""
