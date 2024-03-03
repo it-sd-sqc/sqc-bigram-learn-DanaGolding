@@ -170,6 +170,8 @@ public class Main {
   // database; (2) the newly-created id if the word is added to the database; or
   // (3) -1 should an error occur (such as providing a string consisting solely
   // of whitespace).
+
+  //possible bug
   public static int getId(Connection db, String aWord) throws SQLException {
     int result = -1;
     if (db == null || db.isClosed() || aWord == null) {
@@ -178,21 +180,39 @@ public class Main {
     aWord = aWord.trim();
     if (aWord.isEmpty()) return result;
 
-    Statement command = db.createStatement();
-    String query = MessageFormat.format("""
-      INSERT INTO words (string)
-        SELECT ''{0}'' WHERE NOT EXISTS (
-          SELECT string FROM words WHERE string = ''{0}''
-        )
-      """, aWord);
-    command.execute(query);
-    ResultSet rows = command.executeQuery(MessageFormat.format(
-      "SELECT id FROM words WHERE string = ''{0}''",
-      aWord));
-    if (rows.next()) {
-      result = rows.getInt("id");
+    try (PreparedStatement insertStatement = db.prepareStatement(
+            "INSERT INTO words (string) SELECT ? WHERE NOT EXISTS (SELECT string FROM words WHERE string = ?)")) {
+      insertStatement.setString(1, aWord);
+      insertStatement.setString(2, aWord);
+      insertStatement.executeUpdate();
+    }
+
+    try (PreparedStatement selectStatement = db.prepareStatement(
+            "SELECT id FROM words WHERE string = ?")) {
+      selectStatement.setString(1, aWord);
+      ResultSet rows = selectStatement.executeQuery();
+      if (rows.next()) {
+        result = rows.getInt("id");
+      }
     }
 
     return result;
+
+//    Statement command = db.createStatement();
+//    String query = MessageFormat.format("""
+//      INSERT INTO words (string)
+//        SELECT ''{0}'' WHERE NOT EXISTS (
+//          SELECT string FROM words WHERE string = ''{0}''
+//        )
+//      """, aWord);
+//    command.execute(query);
+//    ResultSet rows = command.executeQuery(MessageFormat.format(
+//      "SELECT id FROM words WHERE string = ''{0}''",
+//      aWord));
+//    if (rows.next()) {
+//      result = rows.getInt("id");
+//    }
+//
+//    return result;
   } // end of getId
 }
