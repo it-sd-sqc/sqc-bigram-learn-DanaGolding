@@ -61,4 +61,21 @@ class MainTest {
   }
 
   // TODO: Create your test(s) below. /////////////////////////////////////////
+
+    void testGetIdBugReproduction() {
+        // Set up necessary objects or variables
+        try (Connection testDb = Main.createConnection()) {
+            // Call the method with an existing word
+            int existingWordId = Main.getId(testDb, "existingWord");
+
+            // Call the method with a new word
+            int newWordId = Main.getId(testDb, "newWord");
+
+            // Assert the incorrect behavior
+            assertNotEquals(existingWordId, newWordId);
+
+        } catch (Exception e) {
+            fail("Exception occurred: " + e.getMessage());
+        }
+    }
 }
